@@ -62,6 +62,7 @@ struct ControlStates {
     int s3_lambert_counter = 0; // makes v_req be computed every n steps
     int s3_lambert_counter_reset_num = 3;
     Vec3 s3_v_req{}; // optimal required velocity
+    double s3_t_arrival = 0.0; // mission time the current s3 trajectory reaches the target
 
     bool rcs_activated_flag = false; // set to true if you want the RCS system to try and point the rocket to target_att
     bool light_engine_flag = false; // set to true if you want to light the engine on that step
@@ -111,6 +112,7 @@ class FlightController {
     double fuel_fill(int i) const;
     double fuel_CoM(int i) const;
     double dry_CoM(int i) const;
+    double stack_delta_v(int i) const;
     Vec3 v_req_for_tof(double tof) const;
     double dv_for_tof(double tof) const;
     void command_engine_cutoff() { cs.cutoff_engine_flag = true; }

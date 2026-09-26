@@ -45,7 +45,8 @@ void appendBell(Mesh& m, float zT, float zE, float rT, float rE,
 
 bool sameDims(const RocketDims& a, const RocketDims& b) {
     return a.length == b.length &&
-           a.radius == b.radius && a.engine_dist == b.engine_dist;
+           a.radius == b.radius && a.engine_dist == b.engine_dist &&
+           a.nose_length == b.nose_length;
 }
 
 } // namespace
@@ -77,12 +78,13 @@ RocketModel::HullBell RocketModel::buildHullBell(RenderBackend& b, const RocketD
     const RColor kBell   = {  46,  47,  53, 255 };  // dark nozzle
 
     // Body frame: +Z = nose, nose tip fixed at the origin (cm-independent so the
-    // mesh caches per stage). Draw slides it by cm_dist to seat the CoM at st.r.
-    // The nose has a *fixed* length so the tip stays the same size across staging.
+    // mesh caches per stage). Draw slides it by cm_dist + nose_length to seat the
+    // CoM at st.r. The nose is the sim's nosecone, on top of the stack (L doesn't
+    // include it), so the tip stays the same size across staging.
     const float nose_z   = 0.0f;
-    const float noseLen  = fminf(radius * 2.8f, 0.6f * L);
+    const float noseLen  = (float)d.nose_length;
     const float nose_base = nose_z - noseLen;
-    const float tail_z   = nose_z - L;
+    const float tail_z   = nose_base - L;
 
     // PBR params (metallic, roughness) are packed into vertex UVs per part.
     auto setMR = [](Mesh& m, size_t from, float metal, float rough) {
@@ -133,14 +135,15 @@ void RocketModel::Draw(RenderBackend& b, const RocketFrame& f) const {
     // Destroyed: the explosion replaces the intact hull + plume entirely.
     if (f.detonated) { drawDetonation(b, f); return; }
 
-    // The hull mesh is built nose-at-origin; slide it down its axis by cm_dist so
-    // the CoM lands at st.r (which f.hull maps to the mesh origin).
-    RMat4 hullM = rmath::mul(f.hull, rmath::translate({0, 0, (float)f.dims.cm_dist}));
+    // The hull mesh is built nose-at-origin; cm_dist is measured from the top of
+    // the stack, below the nosecone, so slide it down by both to land the CoM at
+    // st.r (which f.hull maps to the mesh origin).
+    RMat4 hullM = rmath::mul(f.hull, rmath::translate({0, 0, (float)(f.dims.cm_dist + f.dims.nose_length)}));
 
     Material body;  body.lit = true; body.cull = false;   // unculled: open collar + nozzle shapes
     b.DrawModel(hull_, hullM, body);
     Material bell;  bell.lit = true; bell.cull = false;    // unculled: concave nozzle interior
-    b.DrawModel(bell_, f.bell, bell);
+    if (f.has_engine) b.DrawModel(bell_, f.bell, bell);   // engineless stage (e.g. nosecone): no bell
 
     // Ablation sheath: re-draw the hull slightly inflated as an additive glow
     // shell, so the plasma follows the rocket's shape (windward incandescence +

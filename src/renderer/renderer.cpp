@@ -304,11 +304,12 @@ void Renderer::DrawOneRocket(const RocketState& st, float thrustLevel, double de
     RMat4 Rqe = rmath::fromQuat(qe.w, qe.x, qe.y, qe.z);
 
     RocketFrame f;
-    f.dims = { st.length, st.cm_dist, st.radius, st.engine_dist };
+    f.dims = { st.length, st.cm_dist, st.radius, st.engine_dist, st.nose_length };
     f.hull = rmath::mul(pv, rmath::mul(V, Rqr));
     // Bell pivots (gimbal) about the engine attach point in the body frame.
     f.bell = rmath::mul(pv, rmath::mul(V, rmath::mul(Rqr,
                  rmath::mul(rmath::translate({0, 0, (float)(cm_dist - eng_dist)}), Rqe))));
+    f.has_engine = st.has_engine;
 
     float t   = (float)backend_.Time();
     f.firing  = thrustLevel > 0.02f;

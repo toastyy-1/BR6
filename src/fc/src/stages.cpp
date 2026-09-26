@@ -199,7 +199,7 @@ void FlightController::s2_powered() {
 
     // stop the engine if the V is within proper cutoff range OR if the fuel is out
     // the cutoff should be tied to the max possible delta V of the 3rd stage engine
-    double next_delta_v = fc_stage_delta_v_with_payload(&stage(2), veh.nosecone_mass); // the 3rd stage also has to push the nosecone
+    double next_delta_v = stack_delta_v(2); // the 3rd stage also has to push the nosecone
     double estimated_s2_burn_time = fc_stage_burn_time(&stage(1));
     if (v_gain.mag() < next_delta_v - 0.5 * next_delta_v || burn_time > estimated_s2_burn_time) { // within 20% for margin of error, or motor depleted
         // stop engine to stop overshoot
@@ -291,7 +291,9 @@ void FlightController::payload_deploy() {
             }
         }
 
-        v_req = v_req_for_tof(0.5 * (a + b));
+        double tof = 0.5 * (a + b);
+        v_req = v_req_for_tof(tof);
+        cs.s3_t_arrival = cs.time + tof;
     }
 
     // velocity to be gained as a target
@@ -299,7 +301,7 @@ void FlightController::payload_deploy() {
 
     // cut off when the remaining v to gain is smaller than the delta v the engine will add in the next step
     double dv_next_step = cs.a_inertial.mag() * cs.dt;
-    bool burning = dv_next_step > 0.01;
+    bool burning = cs.lit_stage == cs.active_stage && dv_next_step > 0.01;
 
     // remaining delta v projected onto the thrust axis
     double v_needed = v_gain.dot(cs.a_inertial.unit());

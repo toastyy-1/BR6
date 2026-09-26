@@ -302,6 +302,14 @@ double FlightController::dry_CoM(int i) const {
     }
 }
 
+// delta v a stage can give the rocket at a given point in time
+double FlightController::stack_delta_v(int i) const {
+    double m0 = veh.nosecone_mass;
+    for (int j = i; j < num_stages(); j++) m0 += stage(j).m_dry + cs.fuel[j];
+    double mf = m0 - cs.fuel[i];
+    return mf > 0.0 ? fc_stage_exhaust_velocity(&stage(i)) * log(m0 / mf) : 0.0;
+}
+
 // integrates things to give a decent estimate of what the current moment of inertia of the rocket is
 void FlightController::calculate_I() {
     Vec3 I = {0};

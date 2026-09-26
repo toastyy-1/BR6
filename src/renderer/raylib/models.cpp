@@ -13,7 +13,8 @@ constexpr int kSides = 16;   // hull/bell facets: 16 longerons read cleanly as w
 // cm_dist moves as propellant burns. The hull is built nose-at-origin and slid
 // into place per frame, so it isn't part of the cache key.
 bool sameDims(const RocketDims& a, const RocketDims& b) {
-    return a.length == b.length && a.radius == b.radius && a.engine_dist == b.engine_dist;
+    return a.length == b.length && a.radius == b.radius && a.engine_dist == b.engine_dist &&
+           a.nose_length == b.nose_length;
 }
 
 float clamp01(float x) { return x < 0.0f ? 0.0f : (x > 1.0f ? 1.0f : x); }
@@ -68,11 +69,12 @@ RocketModel::HullBell RocketModel::buildHullBell(RenderBackend& b, const RocketD
     const RColor kTrim = theme::kSelect;         // collar
     const RColor kBell = { 190, 190, 190, 255 }; // nozzle
 
-    // Body frame: +Z = nose, tip at the origin. The nose is a fixed size so the
-    // tip looks the same across staging.
-    const float noseLen   = fminf(radius * 2.8f, 0.6f * L);
+    // Body frame: +Z = nose, tip at the origin. The nose is the sim's nosecone,
+    // sitting on top of the stack (L doesn't include it), so it keeps its size
+    // across staging, even when only a short payload stage is left under it.
+    const float noseLen   = (float)d.nose_length;
     const float nose_base = -noseLen;
-    const float tail_z    = -L;
+    const float tail_z    = -noseLen - L;
 
     Mesh hull;
 
@@ -116,13 +118,15 @@ void RocketModel::Draw(RenderBackend& b, const RocketFrame& f) const {
     // Destroyed: the explosion replaces the intact hull + plume entirely.
     if (f.detonated) { drawDetonation(b, f); return; }
 
-    // The hull mesh is built nose-at-origin; slide it down its axis by cm_dist so
-    // the CoM lands at st.r (which f.hull maps to the mesh origin).
-    RMat4 hullM = rmath::mul(f.hull, rmath::translate({ 0, 0, (float)f.dims.cm_dist }));
+    // The hull mesh is built nose-at-origin; cm_dist is measured from the top of
+    // the stack, below the nosecone, so slide it down by both to land the CoM at
+    // st.r (which f.hull maps to the mesh origin).
+    RMat4 hullM = rmath::mul(f.hull, rmath::translate({ 0, 0, (float)(f.dims.cm_dist + f.dims.nose_length) }));
 
     Material solid;
     solid.lit = true;   // lit = the backend applies aerodynamic heating
     b.DrawModel(hull_, hullM, solid);
+    if (!f.has_engine) return;   // engineless stage (e.g. nosecone): no bell, thrust line or plume
     b.DrawModel(bell_, f.bell, solid);
 
     drawThrustAxis(b, f);

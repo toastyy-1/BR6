@@ -24,6 +24,10 @@ void RaylibBackend::Init(int width, int height, const char* title) {
     // MSAA keeps the wireframe lines smooth. 60 fps is plenty to watch a flight
     // and keeps the renderer's share of the machine small on high-refresh
     // displays; vsync stops tearing.
+    // raylib logs an INFO line for every buffer it frees. With a full terrain
+    // cache (near the ground) that's ~10k lines at shutdown, and the window hangs
+    // unresponsive while a slow terminal drains them. Warnings and errors only.
+    SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
     InitWindow(width, height, title);
     SetWindowMonitor(0);

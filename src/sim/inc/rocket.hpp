@@ -24,6 +24,8 @@ struct RocketState {
     double t = 0;
     double mass = 0, fuel = 0;
     double length = 0, cm_dist = 0, engine_dist = 0, radius = 0;   // dims from nose
+    double nose_length = 0;
+    bool has_engine = true;
 
     Vec3 r{}, v{}, a{}, w{};
     Quat q_rocket{1, 0, 0, 0};

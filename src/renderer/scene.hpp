@@ -19,6 +19,7 @@ struct RocketDims {
     double cm_dist;
     double radius;
     double engine_dist;
+    double nose_length;
 };
 
 // Everything needed to draw the rocket for one frame. Transforms are already in
@@ -28,6 +29,7 @@ struct RocketFrame {
     RocketDims dims;        // current stack dimensions
     RMat4 hull;            // body-local -> view
     RMat4 bell;            // bell-local (gimballed about the engine pivot) -> view
+    bool  has_engine;      // false = stage has no engine
     bool  firing;          // plume visible
     float thrust;          // [0,1] plume intensity
     float flick;           // flame flicker multiplier

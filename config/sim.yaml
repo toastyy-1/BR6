@@ -11,12 +11,12 @@ rockets:
 
     origin_lat: 48.209
     origin_lon: -101.406
-    target_lat: 53.9
-    target_lon: 43.3
+    target_lat: 36.153
+    target_lon: -5.346
 
     radius: 0.835 # radius of the rocket (cylinder)
     nosecone_length: 3.0
-    nosecone_mass: 0.0 # mass of the nosecone/payload on top of the last stage (kg)
+    nosecone_mass: 100.0 # mass of the nosecone/payload on top of the last stage (kg)
     nosecone_com_distance: 2.0 # nosecone CoM back from the nose tip (m), defaults to 2/3 of nosecone_length if omitted
     no_fc: false # if true, this rocket spawns without a flight controller (no guidance/autopilot)
 
@@ -47,7 +47,7 @@ rockets:
         gimbal_range_deg: 5.0
 
       - id: 3
-        dry_mass: 1500.0
+        dry_mass: 1100.0
         fuel_mass: 3306.0
         isp: 285.0
         length: 6.59
